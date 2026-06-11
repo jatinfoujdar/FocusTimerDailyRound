@@ -11,21 +11,15 @@ import SwiftUI
 @main
 struct FocusTimerApp: App {
 
-    private let storageService =
-    StorageService()
+    private let storageService = StorageService()
 
-    private let timerService =
-    TimerService()
+    private let timerService =  TimerService()
 
-    private let badgeService =
-    BadgeService()
+    private let badgeService =  BadgeService()
 
     var body: some Scene {
-
         WindowGroup {
-
             TabView {
-
                 HomeView(
                     vm: HomeViewModel(
                         timerService: timerService,
@@ -39,7 +33,6 @@ struct FocusTimerApp: App {
                         systemImage: "house"
                     )
                 }
-
                 ProfileView(
                     vm: ProfileViewModel(
                         storageService: storageService
