@@ -7,11 +7,51 @@
 
 import SwiftUI
 
+
 @main
-struct FocusTimerDailyRoundApp: App {
+struct FocusTimerApp: App {
+
+    private let storageService =
+    StorageService()
+
+    private let timerService =
+    TimerService()
+
+    private let badgeService =
+    BadgeService()
+
     var body: some Scene {
+
         WindowGroup {
-            ContentView()
+
+            TabView {
+
+                HomeView(
+                    vm: HomeViewModel(
+                        timerService: timerService,
+                        storageService: storageService,
+                        badgeService: badgeService
+                    )
+                )
+                .tabItem {
+                    Label(
+                        "Home",
+                        systemImage: "house"
+                    )
+                }
+
+                ProfileView(
+                    vm: ProfileViewModel(
+                        storageService: storageService
+                    )
+                )
+                .tabItem {
+                    Label(
+                        "Profile",
+                        systemImage: "person"
+                    )
+                }
+            }
         }
     }
 }
