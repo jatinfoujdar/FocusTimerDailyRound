@@ -4,8 +4,7 @@
 //
 //  Created by jatin foujdar on 11/06/26.
 //
-import SwiftUI
-
+import Foundation
 
 enum FocusMode: String, CaseIterable, Codable {
     case work = "Work"
@@ -15,10 +14,14 @@ enum FocusMode: String, CaseIterable, Codable {
 
     var icon: String {
         switch self {
-        case .work: return "briefcase.fill"
-        case .play: return "gamecontroller.fill"
-        case .rest: return "leaf.fill"
-        case .sleep: return "moon.fill"
+        case .work:
+            return "briefcase.fill"
+        case .play:
+            return "gamecontroller.fill"
+        case .rest:
+            return "leaf.fill"
+        case .sleep:
+            return "moon.fill"
         }
     }
 }
