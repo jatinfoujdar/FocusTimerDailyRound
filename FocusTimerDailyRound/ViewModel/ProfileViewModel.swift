@@ -14,36 +14,50 @@ final class ProfileViewModel: ObservableObject {
 
     @Published var totalPoints = 0
 
-    @Published var sessions:
-    [HistoricalSession] = []
+    @Published var sessions: [HistoricalSession] = []
 
-    @Published var badges:
-    [Badge] = []
+    @Published var badges: [Badge] = []
+    
+    @Published var profileImageData: Data?
 
-    private let storageService:
-    StorageService
+    private let storageService: StorageServiceProtocol
 
     init(
-        storageService: StorageService
+        storageService: StorageServiceProtocol
     ) {
 
-        self.storageService =
-        storageService
+        self.storageService = storageService
 
         loadData()
     }
 
     func loadData() {
 
-        totalPoints =
-        storageService.loadPoints()
+        let completedPoints = storageService.loadPoints()
+        var computedTotalPoints = completedPoints
 
-        sessions =
-        storageService.loadHistory()
+        sessions = storageService.loadHistory()
+        var allBadges = sessions.flatMap { $0.badges }
 
-        badges =
-        sessions
-            .flatMap { $0.badges }
-            .map { Badge(symbolName: $0) }
+        if let active = storageService.loadActiveSession() {
+            let start = active.1
+            let currentElapsed = Date().timeIntervalSince(start)
+            let activePoints = Int(currentElapsed / AppConstants.secondsPerPoint)
+            computedTotalPoints += activePoints
+            
+            let badgeService = BadgeService()
+            let activeBadges = badgeService.badges(for: activePoints, startingFrom: completedPoints)
+            allBadges.append(contentsOf: activeBadges)
+        }
+
+        totalPoints = computedTotalPoints
+        badges = allBadges.map { Badge(symbolName: $0) }
+            
+        profileImageData = storageService.loadProfileImage()
+    }
+    
+    func saveProfileImage(_ data: Data) {
+        storageService.saveProfileImage(data)
+        profileImageData = data
     }
 }

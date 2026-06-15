@@ -16,8 +16,9 @@ struct BadgeView: View {
         Image(systemName: badge.symbolName)
             .font(.title2)
             .foregroundColor(.accentColor)
-            .padding(6)
-            .background(Color(.systemGray5))
+            .padding(8)
+            .background(Color(.systemGray6))
             .clipShape(Circle())
+            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }

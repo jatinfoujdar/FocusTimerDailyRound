@@ -10,8 +10,9 @@ import SwiftUI
 
 struct HomeView: View {
 
-    @StateObject var vm:
-    HomeViewModel
+    @StateObject var vm: HomeViewModel
+    let storageService: StorageServiceProtocol
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
 
@@ -38,6 +39,19 @@ struct HomeView: View {
             .navigationTitle(
                 "Focus Timer"
             )
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: ProfileView(vm: ProfileViewModel(storageService: storageService))) {
+                        Image(systemName: "person.crop.circle")
+                            .font(.title2)
+                    }
+                }
+            }
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .active {
+                    vm.refreshActiveSessionTime()
+                }
+            }
         }
     }
 }

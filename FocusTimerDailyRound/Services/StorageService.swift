@@ -16,14 +16,25 @@ protocol StorageServiceProtocol {
     func savePoints(_ points: Int)
 
     func loadPoints() -> Int
+    
+    func saveActiveSession(mode: FocusMode, startTime: Date)
+    
+    func loadActiveSession() -> (FocusMode, Date)?
+    
+    func clearActiveSession()
+    
+    func saveProfileImage(_ data: Data)
+    
+    func loadProfileImage() -> Data?
 }
-
-
 
 final class StorageService: StorageServiceProtocol {
 
     private let historyKey = "history"
     private let pointsKey = "totalPoints"
+    private let activeModeKey = "activeSessionMode"
+    private let activeStartTimeKey = "activeSessionStartTime"
+    private let profileImageKey = "profileImageData"
 
     func saveSession(_ session: HistoricalSession) {
 
@@ -62,5 +73,33 @@ final class StorageService: StorageServiceProtocol {
         UserDefaults.standard.integer(
             forKey: pointsKey
         )
+    }
+    
+    func saveActiveSession(mode: FocusMode, startTime: Date) {
+        UserDefaults.standard.set(mode.rawValue, forKey: activeModeKey)
+        UserDefaults.standard.set(startTime.timeIntervalSince1970, forKey: activeStartTimeKey)
+    }
+    
+    func loadActiveSession() -> (FocusMode, Date)? {
+        guard let modeString = UserDefaults.standard.string(forKey: activeModeKey),
+              let mode = FocusMode(rawValue: modeString) else {
+            return nil
+        }
+        let timeInterval = UserDefaults.standard.double(forKey: activeStartTimeKey)
+        guard timeInterval > 0 else { return nil }
+        return (mode, Date(timeIntervalSince1970: timeInterval))
+    }
+    
+    func clearActiveSession() {
+        UserDefaults.standard.removeObject(forKey: activeModeKey)
+        UserDefaults.standard.removeObject(forKey: activeStartTimeKey)
+    }
+    
+    func saveProfileImage(_ data: Data) {
+        UserDefaults.standard.set(data, forKey: profileImageKey)
+    }
+    
+    func loadProfileImage() -> Data? {
+        UserDefaults.standard.data(forKey: profileImageKey)
     }
 }

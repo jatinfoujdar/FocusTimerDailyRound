@@ -20,14 +20,14 @@ final class HomeViewModel: ObservableObject {
     private var startDate: Date?
 
     private let timerService: TimerService
-    private let storageService: StorageService
+    private let storageService: StorageServiceProtocol
     private let badgeService: BadgeService
 
     private var cancellables = Set<AnyCancellable>()
 
     init(
         timerService: TimerService,
-        storageService: StorageService,
+        storageService: StorageServiceProtocol,
         badgeService: BadgeService
     ) {
 
@@ -37,33 +37,54 @@ final class HomeViewModel: ObservableObject {
 
         timerService.$elapsedTime
             .sink { [weak self] value in
+                guard let self else { return }
+                self.elapsedTime = value
 
-                self?.elapsedTime = value
+                let points = Int(value / AppConstants.secondsPerPoint)
+                self.currentPoints = points
 
-                let points =
-                Int(value / AppConstants.secondsPerPoint)
-
-                self?.currentPoints = points
-
-                self?.badges =
-                self?.badgeService
-                    .badges(for: points)
+                let totalPointsBefore = self.storageService.loadPoints()
+                self.badges = self.badgeService
+                    .badges(for: points, startingFrom: totalPointsBefore)
                     .map { Badge(symbolName: $0) }
-                ?? []
             }
             .store(in: &cancellables)
+
+        // Resume active session if exists
+        refreshActiveSessionTime()
+    }
+    
+    func refreshActiveSessionTime() {
+        if let active = storageService.loadActiveSession() {
+            let mode = active.0
+            let start = active.1
+            self.activeMode = mode
+            self.startDate = start
+            
+            let currentElapsed = Date().timeIntervalSince(start)
+            self.elapsedTime = currentElapsed
+            let points = Int(currentElapsed / AppConstants.secondsPerPoint)
+            self.currentPoints = points
+            
+            let totalPointsBefore = storageService.loadPoints()
+            self.badges = badgeService
+                .badges(for: points, startingFrom: totalPointsBefore)
+                .map { Badge(symbolName: $0) }
+                
+            timerService.start(from: start)
+        }
     }
 
     func startSession(mode: FocusMode) {
+        guard activeMode == nil else { return }
 
         activeMode = mode
-
         startDate = Date()
-
         elapsedTime = 0
-
         currentPoints = 0
+        badges = []
 
+        storageService.saveActiveSession(mode: mode, startTime: startDate!)
         timerService.start(from: startDate!)
     }
 
@@ -82,6 +103,7 @@ final class HomeViewModel: ObservableObject {
             badges: badges.map(\.symbolName)
         )
 
+        storageService.clearActiveSession()
         storageService.saveSession(session)
 
         let total =
@@ -93,11 +115,9 @@ final class HomeViewModel: ObservableObject {
         timerService.stop()
 
         self.activeMode = nil
-
+        self.startDate = nil
         elapsedTime = 0
-
         currentPoints = 0
-
         badges = []
     }
 
@@ -115,7 +135,7 @@ final class HomeViewModel: ObservableObject {
         let seconds =
         totalSeconds % 60
 
-        if hours > 0 {
+        if elapsed >= AppConstants.hourThreshold {
 
             return String(
                 format: "%02d:%02d:%02d",
